@@ -61,6 +61,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.2.0', '<')) {
             $this->updatePaymentDataColumnType($setup);
         }
+        if (version_compare($context->getVersion(), '0.2.1', '<')) {
+            $this->updatePaymentExpressDataColumnType($setup);
+        }
         $installer->endSetup();
     }
 
@@ -454,5 +457,28 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'comment'  => 'Payment Data'
                 ]
             );
+    }
+
+    protected function updatePaymentExpressDataColumnType(SchemaSetupInterface $setup)
+    {
+        $paymentTable = $setup->getTable('sm_payment');
+
+        $payment_express_payment_data = json_encode(
+            [
+                'hit_username' => 'provided by Payment Express',
+                'hit_key'      => 'provided by Payment Express',
+                'device_id'    => 'provided by Payment Express',
+                'station_id'   => 'provided by Payment Express',
+                'endpoint'     => 'uat'
+            ]
+        );
+        $setup->getConnection()->update(
+            $paymentTable,
+            [
+                'payment_data' => $payment_express_payment_data,
+                'is_active'    => 0
+            ],
+            ['type = ?' => "payment_express"]
+        );
     }
 }
