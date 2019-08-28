@@ -63,6 +63,7 @@ class RetailMultiple extends Info
      * Enter description here...
      *
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getMultiplePaymentData()
     {
