@@ -64,6 +64,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.2.1', '<')) {
             $this->updatePaymentExpressDataColumnType($setup);
         }
+        if (version_compare($context->getVersion(), '0.2.2', '<')) {
+            $this->addPaypalPWA($setup);
+        }
         $installer->endSetup();
     }
 
@@ -316,6 +319,26 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
     }
 
+    protected function addPaypalPWA(SchemaSetupInterface $setup) {
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'payment_data'
+            ],
+            [
+                [
+                    'type'         => \SM\Payment\Model\RetailPayment::PAYPAL_PWA,
+                    'title'        => "Paypal PWA",
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([])
+                ],
+            ]
+        );
+    }
 
     protected function addPaymentApp(SchemaSetupInterface $setup)
     {
