@@ -10,10 +10,21 @@ namespace SM\Payment\Plugin\View\Element;
 
 class Template
 {
+    /**
+     * @var \Magento\Framework\Registry
+     */
+    protected $registry;
+
+    public function __construct(\Magento\Framework\Registry $registry)
+    {
+        $this->registry = $registry;
+    }
+
     public function beforeGetTemplateFile(\Magento\Framework\View\Element\Template $subject)
     {
-        if (!$subject->getData('area')) {
+        if ($this->registry->registry('print_magento_invoice_from_cpos')) {
             $subject->setData('area', 'adminhtml');
+            $this->registry->unregister('print_magento_invoice_from_cpos');
         }
     }
 }
