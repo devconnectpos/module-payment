@@ -7,7 +7,6 @@
 
 namespace SM\Payment\Plugin\View\Element;
 
-
 class Template
 {
     /**
