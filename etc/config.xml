@@ -6,7 +6,7 @@
                 <active>1</active>
                 <model>SM\Payment\Model\RetailMultiple</model>
                 <order_status>pending</order_status>
-                <title>Connect-POS Payment</title>
+                <title>ConnectPOS Payment</title>
                 <allowspecific>0</allowspecific>
                 <group>offline</group>
             </retailmultiple>
