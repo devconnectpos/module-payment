@@ -10,6 +10,14 @@
                 <allowspecific>0</allowspecific>
                 <group>offline</group>
             </retailmultiple>
+            <payonaccount>
+                <active>1</active>
+                <model>SM\Payment\Model\PayOnAccount</model>
+                <order_status>pending</order_status>
+                <title>Pay On Account - Admin Only</title>
+                <allowspecific>0</allowspecific>
+                <group>offline</group>
+            </payonaccount>
         </payment>
     </default>
 </config>
