@@ -67,6 +67,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.2.2', '<')) {
             $this->addPaypalPWA($setup);
         }
+        if (version_compare($context->getVersion(), '0.2.3', '<')) {
+            $this->addPromotionalCardPayment($setup);
+        }
         $installer->endSetup();
     }
 
@@ -502,6 +505,32 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'is_active'    => 0
             ],
             ['type = ?' => "payment_express"]
+        );
+    }
+
+    /**
+     * @param \Magento\Framework\Setup\SchemaSetupInterface $setup
+     */
+    protected function addPromotionalCardPayment(SchemaSetupInterface $setup)
+    {
+
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'payment_data'
+            ],
+            [
+                [
+                    'type'         => RetailPayment::PROMOTIONAL_CARD,
+                    'title'        => "Promotional Card",
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([])
+                ],
+            ]
         );
     }
 }
