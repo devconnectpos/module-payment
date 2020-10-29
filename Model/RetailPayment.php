@@ -24,6 +24,7 @@ class RetailPayment extends AbstractModel implements RetailPaymentInterface, Ide
     const REFUND_TO_STORE_CREDIT_PAYMENT_TYPE = 'refund_to_store_credit';
     const EWAY                                = 'eway';
     const PAYPAL_PWA                          = 'paypal_pwa';
+    const ADYEN                               = 'adyen';
 
     protected function _construct()
     {
