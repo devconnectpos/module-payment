@@ -67,19 +67,29 @@ class PaymentManagement extends ServiceAbstract
      */
     public function load(DataObject $searchCriteria)
     {
-        if (is_null($searchCriteria) || !$searchCriteria) {
+        if ($searchCriteria === null || !$searchCriteria) {
             $searchCriteria = $this->getSearchCriteria();
         }
+        $registerId = $this->searchCriteria['registerId'];
 
         $this->getSearchResult()->setSearchCriteria($searchCriteria);
         $collection = $this->getPaymentCollection($searchCriteria);
         $items      = [];
-        if ($collection->getLastPageNumber() < $searchCriteria->getData('currentPage')) {
-        } else {
+        if ($collection->getLastPageNumber() >= $searchCriteria->getData('currentPage')) {
             foreach ($collection as $payment) {
-                $paymentData = new XPayment();
-                $paymentData->addData($payment->getData());
-                $items[] = $paymentData;
+                $xPayment = new XPayment();
+                if ($payment['type'] === 'adyen') {
+                    $paymentData = json_decode($payment->getData('payment_data'), true);
+                    if (isset($paymentData[$registerId])) {
+                        $payment->setData('payment_data', json_encode($paymentData[$registerId]));
+                    } elseif (isset($paymentData[0])) {
+                        $payment->setData('payment_data', json_encode($paymentData[0]));
+                    } else {
+                        $payment->setData('payment_data', json_encode($paymentData));
+                    }
+                }
+                $xPayment->addData($payment->getData());
+                $items[] = $xPayment;
             }
         }
 
@@ -154,23 +164,30 @@ class PaymentManagement extends ServiceAbstract
      */
     public function savePayment()
     {
-        $listPayment = $this->getRequestData();
+        $data = $this->getRequestData();
+        $listPayment = $data['payment_data'];
+        $registerId = 0;
+        if (isset($data['register_id'])) {
+            $registerId  = $data['register_id'];
+        }
         $items       = [];
-        foreach ($listPayment['payment_data'] as $pData) {
-            $paymentData = new XPayment();
+        foreach ($listPayment as $pData) {
+            $xPayment = new XPayment();
             if (isset($pData['payment_data'])) {
                 $pData['payment_data'] = json_encode($pData['payment_data']);
             }
-            if (isset($pData['id']) && $pData['id'] && $pData['id'] < 1481282470403) {
+            if ($pData['type'] === 'adyen') {
+                $items[] = $xPayment->addData($this->saveAdyenPayment($pData, $registerId));
+            } elseif (isset($pData['id']) && $pData['id'] && $pData['id'] < 1481282470403) {
                 $payment = $this->retailPaymentFactory->create();
                 $payment->addData($pData)->save();
-                $items[] = $paymentData->addData($payment->getData());
+                $items[] = $xPayment->addData($payment->getData());
             } else {
                 $pData['id']   = null;
                 $pData['type'] = "credit_card";
                 $payment       = $this->retailPaymentFactory->create();
                 $payment->setData($pData)->save();
-                $items[] = $paymentData->addData($payment->getData());
+                $items[] = $xPayment->addData($payment->getData());
             }
         }
 
@@ -178,5 +195,28 @@ class PaymentManagement extends ServiceAbstract
                     ->setItems($items)
                     ->setTotalCount(1)
                     ->setLastPageNumber(1)->getOutput();
+    }
+    
+    protected function saveAdyenPayment($pData, $registerId)
+    {
+        $payment = $this->retailPaymentFactory->create()->load($pData['id']);
+        $paymentData = json_decode($pData['payment_data'], true);
+        $oldPaymentData = json_decode($payment->getData('payment_data'), true);
+        //unset old data, save to model
+        unset($pData['payment_data']);
+        $payment->addData($pData);
+    
+        if (isset($oldPaymentData['POIID'])) {
+            $payment->setData('payment_data', json_encode([0 => $paymentData, $registerId => $paymentData]));
+        } else {
+            $oldPaymentData[$registerId] = $paymentData;
+            $payment->setData('payment_data', json_encode($oldPaymentData));
+        }
+        
+        $payment->save();
+        
+        $newPaymentData = json_decode($payment->getData('payment_data'), true);
+        $payment->setData('payment_data', json_encode($newPaymentData[$registerId]));
+        return $payment->getData();
     }
 }

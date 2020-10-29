@@ -67,6 +67,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.2.2', '<')) {
             $this->addPaypalPWA($setup);
         }
+        if (version_compare($context->getVersion(), '0.2.3', '<')) {
+            $this->addAdyenPayment($setup);
+        }
         $installer->endSetup();
     }
 
@@ -502,6 +505,39 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'is_active'    => 0
             ],
             ['type = ?' => "payment_express"]
+        );
+    }
+    
+    protected function addAdyenPayment(SchemaSetupInterface $setup)
+    {
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data'
+            ],
+            [
+                [
+                    'type'                  => RetailPayment::ADYEN,
+                    'title'                 => "Adyen Payment",
+                    'is_dummy'              => 0,
+                    'allow_amount_tendered' => true,
+                    'payment_data'          => json_encode(
+                        [
+                            'api_key' => 'provided by Adyen',
+                            'client_key' => 'provided by Adyen',
+                            'merchant_account' => 'provided by Adyen',
+                            'environment' => 'test',
+                            'POIID' => '',
+                            'live_url_prefix' => 'Live Url Prefix'
+                        ]
+                    )
+                ],
+            ]
         );
     }
 }
