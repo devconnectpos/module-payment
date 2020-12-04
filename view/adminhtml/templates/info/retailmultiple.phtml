@@ -13,17 +13,52 @@
 <br>
 <br>
 <?php if (count($block->getMultiplePaymentData()) > 0): ?>
-    <?php foreach ($block->getMultiplePaymentData() as $payment) {
-        ?>
+    <?php foreach ($block->getMultiplePaymentData() as $payment): ?>
         <div style="margin-left: 15px">
-            <p style="font-weight: 700;font-style: italic">
-                <?php echo $payment['title'];
-                if (isset($payment['data']['ref']))
-                    echo ": Ref#" . $payment['data']['ref'];
-                ?></p>
+            <p style="font-weight: 700; text-transform: uppercase"><?php echo $payment['title']; ?>
+            <?php if (isset($payment['data']['ref']) && !!$payment['data']['ref']): ?>
+                <?php echo ": Ref#" . $payment['data']['ref'] ?>
+            <?php endif; ?></p>
+            
+            <?php if ($payment['type'] === 'payment_express' && !empty($payment['data']['Result'])): ?>
+                <table class="data-table admin__table-secondary">
+                    <tbody>
+                    <?php if (!empty($payment['data']['Result']['CN'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Masked Card Number')) ?>:</th>
+                            <td><?= $payment['data']['Result']['CN'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['Result']['CH'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Card Holder Name')) ?>:</th>
+                            <td><?= $payment['data']['Result']['CH'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['Result']['CT'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Card Type')) ?>:</th>
+                            <td><?= $payment['data']['Result']['CT'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['Result']['AC'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Authorisation Code')) ?>:</th>
+                            <td><?= $payment['data']['Result']['AC'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['Result']['TR'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Transaction Reference')) ?>:</th>
+                            <td><?= $payment['data']['Result']['TR'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+            
             <p><em><?php echo $payment['created_at'] ?></em></p>
             <p><?php echo $block->formatPrice($payment['amount']) ?></p>
         </div>
-        <?php
-    } ?>
+    <?php endforeach; ?>
 <?php endif; ?>
