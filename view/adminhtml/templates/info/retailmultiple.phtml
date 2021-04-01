@@ -56,7 +56,77 @@
                     </tbody>
                 </table>
             <?php endif; ?>
-            
+
+            <?php // authorize.net payment details?>
+            <?php if ($payment['type'] === 'authorize_net' && !empty($payment['data'])): ?>
+                <table class="data-table admin__table-secondary">
+                    <tbody>
+                    <?php if (!empty($payment['data']['accountType'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Credit Card Type')) ?>:</th>
+                            <td><?= $payment['data']['accountType'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['accountNumber'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Credit Card Number')) ?>:</th>
+                            <td><?= $payment['data']['accountNumber'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['transId'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Transaction ID')) ?>:</th>
+                            <td><?= $payment['data']['transId'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['avsResultCode'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('AVS Response')) ?>:</th>
+                            <td><?= $payment['data']['avsResultCode'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['cvvResultCode'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('CCV Response')) ?>:</th>
+                            <td><?= $payment['data']['cvvResultCode'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['cavvResultCode'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('CAVV Response')) ?>:</th>
+                            <td><?= $payment['data']['cavvResultCode'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            <?php endif;?>
+    
+            <?php // eway payment details?>
+            <?php if ($payment['type'] === 'eway' && !empty($payment['data'])): ?>
+                <table class="data-table admin__table-secondary">
+                    <tbody>
+                    <?php if (!empty($payment['data']['CardNumber'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Card Number')) ?>:</th>
+                            <td><?= $payment['data']['CardNumber'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['TransactionID'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Transaction ID')) ?>:</th>
+                            <td><?= $payment['data']['TransactionID'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($payment['data']['TransactionType'])): ?>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Transaction Type')) ?>:</th>
+                            <td><?= $payment['data']['TransactionType'] ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            <?php endif;?>
+
             <p><em><?php echo $payment['created_at'] ?></em></p>
             <p><?php echo $block->formatPrice($payment['amount']) ?></p>
         </div>
