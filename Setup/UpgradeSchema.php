@@ -7,9 +7,9 @@
 namespace SM\Payment\Setup;
 
 use Magento\Framework\DB\Ddl\Table;
-use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Magento\Framework\Setup\UpgradeSchemaInterface;
 use SM\Payment\Model\RetailPayment;
 
 /**
@@ -70,6 +70,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.2.3', '<')) {
             $this->addAdyenPayment($setup);
         }
+        if (version_compare($context->getVersion(), '0.2.4', '<')) {
+            $this->addStripePayment($setup);
+        }
         $installer->endSetup();
     }
 
@@ -89,55 +92,55 @@ class UpgradeSchema implements UpgradeSchemaInterface
             'id',
             Table::TYPE_INTEGER,
             null,
-            ['identity' => true, 'nullable' => false, 'primary' => true, 'unsigned' => true,],
+            ['identity' => true, 'nullable' => false, 'primary' => true, 'unsigned' => true],
             'Entity ID'
         )->addColumn(
             'type',
             Table::TYPE_TEXT,
             25,
-            ['nullable' => true, 'unsigned' => true,],
+            ['nullable' => true, 'unsigned' => true],
             'Outlet Id'
         )->addColumn(
             'title',
             Table::TYPE_TEXT,
             255,
-            ['nullable' => true, 'unsigned' => true,],
+            ['nullable' => true, 'unsigned' => true],
             'Title'
         )->addColumn(
             'payment_data',
             Table::TYPE_TEXT,
             255,
-            ['nullable' => true, 'unsigned' => true,],
+            ['nullable' => true, 'unsigned' => true],
             'Data'
         )->addColumn(
             'created_at',
             Table::TYPE_TIMESTAMP,
             null,
-            ['nullable' => false, 'default' => Table::TIMESTAMP_INIT,],
+            ['nullable' => false, 'default' => Table::TIMESTAMP_INIT],
             'Creation Time'
         )->addColumn(
             'updated_at',
             Table::TYPE_TIMESTAMP,
             null,
-            ['nullable' => false, 'default' => Table::TIMESTAMP_INIT_UPDATE,],
+            ['nullable' => false, 'default' => Table::TIMESTAMP_INIT_UPDATE],
             'Modification Time'
         )->addColumn(
             'is_active',
             Table::TYPE_SMALLINT,
             null,
-            ['nullable' => false, 'default' => '1',],
+            ['nullable' => false, 'default' => '1'],
             'Is Active'
         )->addColumn(
             'is_dummy',
             Table::TYPE_SMALLINT,
             null,
-            ['nullable' => false, 'default' => '1',],
+            ['nullable' => false, 'default' => '1'],
             'Is Dummy'
         )->addColumn(
             'allow_amount_tendered',
             Table::TYPE_SMALLINT,
             null,
-            ['nullable' => false, 'default' => '1',],
+            ['nullable' => false, 'default' => '1'],
             'Allow Amount Tendered'
         );
         $installer->getConnection()->createTable($table);
@@ -242,7 +245,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
     }
 
-
     protected function updateCashPaymentData(SchemaSetupInterface $setup)
     {
         $paymentTable = $setup->getTable('sm_payment');
@@ -278,7 +280,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     protected function addIzettlePayment(SchemaSetupInterface $setup)
     {
-
         $paymentTable = $setup->getTable('sm_payment');
         $setup->getConnection()->insertArray(
             $paymentTable,
@@ -322,7 +323,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
     }
 
-    protected function addPaypalPWA(SchemaSetupInterface $setup) {
+    protected function addPaypalPWA(SchemaSetupInterface $setup)
+    {
         $paymentTable = $setup->getTable('sm_payment');
         $setup->getConnection()->insertArray(
             $paymentTable,
@@ -507,7 +509,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ['type = ?' => "payment_express"]
         );
     }
-    
+
     protected function addAdyenPayment(SchemaSetupInterface $setup)
     {
         $paymentTable = $setup->getTable('sm_payment');
@@ -534,6 +536,35 @@ class UpgradeSchema implements UpgradeSchemaInterface
                             'environment' => 'test',
                             'POIID' => '',
                             'live_url_prefix' => 'Live Url Prefix'
+                        ]
+                    )
+                ],
+            ]
+        );
+    }
+
+    protected function addStripePayment(SchemaSetupInterface $setup)
+    {
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data'
+            ],
+            [
+                [
+                    'type'                  => RetailPayment::STRIPE,
+                    'title'                 => "Stripe",
+                    'is_dummy'              => 0,
+                    'allow_amount_tendered' => true,
+                    'payment_data'          => json_encode(
+                        [
+                            'secret_api_key' => '',
+                            'publishable_api_key' => '',
                         ]
                     )
                 ],
