@@ -25,6 +25,7 @@ class RetailPayment extends AbstractModel implements RetailPaymentInterface, Ide
     const EWAY                                = 'eway';
     const PAYPAL_PWA                          = 'paypal_pwa';
     const ADYEN                               = 'adyen';
+    const STRIPE                              = 'stripe';
 
     protected function _construct()
     {
