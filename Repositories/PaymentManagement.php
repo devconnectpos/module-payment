@@ -1,9 +1,4 @@
 <?php
-/**
- * Created by mr.vjcspy@gmail.com - khoild@smartosc.com.
- * Date: 15/01/2017
- * Time: 20:31
- */
 
 namespace SM\Payment\Repositories;
 
@@ -17,6 +12,10 @@ use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
 use SM\Core\Api\Data\XPayment;
 
+/**
+ * Class PaymentManagement
+ * @package SM\Payment\Repositories
+ */
 class PaymentManagement extends ServiceAbstract
 {
 
@@ -24,6 +23,7 @@ class PaymentManagement extends ServiceAbstract
      * @var \SM\Payment\Model\RetailPaymentFactory
      */
     protected $retailPaymentFactory;
+
     /**
      * @var \SM\Payment\Model\ResourceModel\RetailPayment\CollectionFactory
      */
