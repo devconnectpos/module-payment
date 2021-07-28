@@ -32,6 +32,7 @@ class RetailPayment extends AbstractModel implements RetailPaymentInterface, Ide
     const FLUTTERWAVE = 'flutterwave';
     const PAYSTACK = 'paystack';
     const BRAIN_TREE = 'brain_tree';
+    const PAYPAL_EXPRESS = 'paypal_express';
 
     protected function _construct()
     {
