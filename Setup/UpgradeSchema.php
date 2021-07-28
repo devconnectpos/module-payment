@@ -112,6 +112,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->addBrainTreePayment($setup);
         }
 
+        if (version_compare($context->getVersion(), '0.2.7', '<')) {
+            $this->addPaypalExpressPayment($setup);
+        }
+
         $installer->endSetup();
     }
 
@@ -761,6 +765,39 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'is_dummy' => 0,
                     'allow_amount_tendered' => 1,
                     'payment_data' => json_encode(['name' => 'brain_tree'])
+                ],
+            ]
+        );
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    protected function addPaypalExpressPayment(SchemaSetupInterface $setup)
+    {
+        $paymentCollection = $this->paymentCollection->create();
+        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::PAYMENT_EXPRESS)->getSize();
+        if ($exist) {
+            return;
+        }
+
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data'
+            ],
+            [
+                [
+                    'type' => RetailPayment::PAYPAL_EXPRESS,
+                    'title' => 'Paypal Express',
+                    'is_dummy' => 0,
+                    'allow_amount_tendered' => 1,
+                    'payment_data' => json_encode(['name' => RetailPayment::PAYPAL_EXPRESS])
                 ],
             ]
         );
