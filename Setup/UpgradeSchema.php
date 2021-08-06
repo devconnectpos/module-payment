@@ -112,7 +112,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->addBrainTreePayment($setup);
         }
 
-        if (version_compare($context->getVersion(), '0.2.7', '<')) {
+        if (version_compare($context->getVersion(), '0.2.8', '<')) {
             $this->addPaypalExpressPayment($setup);
         }
 
@@ -776,7 +776,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function addPaypalExpressPayment(SchemaSetupInterface $setup)
     {
         $paymentCollection = $this->paymentCollection->create();
-        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::PAYMENT_EXPRESS)->getSize();
+        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::PAYPAL_EXPRESS)->getSize();
         if ($exist) {
             return;
         }
