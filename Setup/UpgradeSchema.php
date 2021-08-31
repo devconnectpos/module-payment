@@ -116,6 +116,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->addPaypalExpressPayment($setup);
         }
 
+        if (version_compare($context->getVersion(), '0.2.9', '<')) {
+            $this->addGravityPayment($setup);
+        }
+
         $installer->endSetup();
     }
 
@@ -798,6 +802,39 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'is_dummy' => 0,
                     'allow_amount_tendered' => 1,
                     'payment_data' => json_encode(['name' => RetailPayment::PAYPAL_EXPRESS])
+                ],
+            ]
+        );
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    protected function addGravityPayment(SchemaSetupInterface $setup)
+    {
+        $paymentCollection = $this->paymentCollection->create();
+        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::GRAVITY)->getSize();
+        if ($exist) {
+            return;
+        }
+
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data'
+            ],
+            [
+                [
+                    'type' => RetailPayment::GRAVITY,
+                    'title' => 'Gravity',
+                    'is_dummy' => 0,
+                    'allow_amount_tendered' => 1,
+                    'payment_data' => json_encode(['name' => RetailPayment::GRAVITY])
                 ],
             ]
         );
