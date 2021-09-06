@@ -14,6 +14,7 @@ use SM\Core\Api\Data\XPayment;
 
 /**
  * Class PaymentManagement
+ *
  * @package SM\Payment\Repositories
  */
 class PaymentManagement extends ServiceAbstract
@@ -45,7 +46,7 @@ class PaymentManagement extends ServiceAbstract
         RetailPaymentFactory $retailPaymentFactory,
         CollectionFactory $paymentCollectionFactory
     ) {
-        $this->retailPaymentFactory     = $retailPaymentFactory;
+        $this->retailPaymentFactory = $retailPaymentFactory;
         $this->paymentCollectionFactory = $paymentCollectionFactory;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
@@ -74,9 +75,28 @@ class PaymentManagement extends ServiceAbstract
 
         $this->getSearchResult()->setSearchCriteria($searchCriteria);
         $collection = $this->getPaymentCollection($searchCriteria);
-        $items      = [];
+        $collection->addFieldToFilter(['register_id', 'register_id', 'register_id'], [['eq' => $registerId], ['eq' => 0], ['null' => true]]);
+        $items = [];
         if ($collection->getLastPageNumber() >= $searchCriteria->getData('currentPage')) {
+            // Merge payments with and without register id
+            $hasRegisterIdPayments = [];
+            $hasNoRegisterIdPayments = [];
             foreach ($collection as $payment) {
+                if (!$payment->getData('register_id')) {
+                    $hasNoRegisterIdPayments[$payment->getData('type')] = $payment;
+                    continue;
+                }
+                $hasRegisterIdPayments[$payment->getData('type')] = $payment;
+            }
+            foreach ($hasNoRegisterIdPayments as $payment) {
+                if (isset($hasRegisterIdPayments[$payment->getData('type')])) {
+                    continue;
+                }
+                $hasRegisterIdPayments[$payment->getData('type')] = $payment;
+            }
+
+            // Use the final payment array for output
+            foreach ($hasRegisterIdPayments as $payment) {
                 $xPayment = new XPayment();
                 if ($payment['type'] === 'adyen') {
                     $paymentData = json_decode($payment->getData('payment_data'), true);
@@ -94,9 +114,9 @@ class PaymentManagement extends ServiceAbstract
         }
 
         return $this->getSearchResult()
-                    ->setItems($items)
-                    ->setTotalCount($collection->getSize())
-                    ->setLastPageNumber($collection->getLastPageNumber());
+            ->setItems($items)
+            ->setTotalCount($collection->getSize())
+            ->setLastPageNumber($collection->getLastPageNumber());
     }
 
     /**
@@ -124,6 +144,8 @@ class PaymentManagement extends ServiceAbstract
             );
         }
 
+        $collection->setOrder("id");
+
         return $collection;
     }
 
@@ -133,23 +155,23 @@ class PaymentManagement extends ServiceAbstract
             [
                 'type'     => "cash",
                 'title'    => "Cash",
-                'is_dummy' => 1
+                'is_dummy' => 1,
             ],
             [
                 'type'     => "credit_card",
                 'title'    => "Credit Card",
-                'is_dummy' => 1
+                'is_dummy' => 1,
             ],
             [
                 'type'     => "credit_card",
                 'title'    => "Debit Card",
-                'is_dummy' => 1
+                'is_dummy' => 1,
             ],
             [
                 'type'     => "credit_card",
                 'title'    => "Visa Card",
-                'is_dummy' => 1
-            ]
+                'is_dummy' => 1,
+            ],
         ];
         foreach ($payments as $pData) {
             $payment = $this->retailPaymentFactory->create();
@@ -168,9 +190,9 @@ class PaymentManagement extends ServiceAbstract
         $listPayment = $data['payment_data'];
         $registerId = 0;
         if (isset($data['register_id'])) {
-            $registerId  = $data['register_id'];
+            $registerId = $data['register_id'];
         }
-        $items       = [];
+        $items = [];
         foreach ($listPayment as $pData) {
             $xPayment = new XPayment();
             if (isset($pData['payment_data'])) {
@@ -179,24 +201,45 @@ class PaymentManagement extends ServiceAbstract
             if ($pData['type'] === 'adyen') {
                 $items[] = $xPayment->addData($this->saveAdyenPayment($pData, $registerId));
             } elseif (isset($pData['id']) && $pData['id'] && $pData['id'] < 1481282470403) {
-                $payment = $this->retailPaymentFactory->create();
-                $payment->addData($pData)->save();
-                $items[] = $xPayment->addData($payment->getData());
+                // Find existing payment with corresponding register id
+                if ($registerId) {
+                    $pData['register_id'] = $registerId;
+                    $collection = $this->paymentCollectionFactory->create();
+                    $existingPayment = $collection->addFieldToFilter('register_id', $registerId)
+                        ->addFieldToFilter('type', $pData['type'])
+                        ->getFirstItem();
+
+                    if (!$existingPayment->getId()) {
+                        $pData['id'] = null;
+                        $payment = $this->retailPaymentFactory->create();
+                        $payment->addData($pData)->save();
+                        $items[] = $xPayment->addData($payment->getData());
+                    } else {
+                        $pData['id'] = $existingPayment->getId();
+                        $existingPayment->setData($pData)->save();
+                        $items[] = $xPayment->addData($existingPayment->getData());
+                    }
+                } else {
+                    $payment = $this->retailPaymentFactory->create();
+                    $payment->addData($pData)->save();
+                    $items[] = $xPayment->addData($payment->getData());
+                }
             } else {
-                $pData['id']   = null;
+                $pData['id'] = null;
                 $pData['type'] = "credit_card";
-                $payment       = $this->retailPaymentFactory->create();
+                $pData['register_id'] = $registerId;
+                $payment = $this->retailPaymentFactory->create();
                 $payment->setData($pData)->save();
                 $items[] = $xPayment->addData($payment->getData());
             }
         }
 
         return $this->getSearchResult()
-                    ->setItems($items)
-                    ->setTotalCount(1)
-                    ->setLastPageNumber(1)->getOutput();
+            ->setItems($items)
+            ->setTotalCount(1)
+            ->setLastPageNumber(1)->getOutput();
     }
-    
+
     protected function saveAdyenPayment($pData, $registerId)
     {
         $payment = $this->retailPaymentFactory->create()->load($pData['id']);
@@ -205,18 +248,19 @@ class PaymentManagement extends ServiceAbstract
         //unset old data, save to model
         unset($pData['payment_data']);
         $payment->addData($pData);
-    
+
         if (isset($oldPaymentData['POIID'])) {
             $payment->setData('payment_data', json_encode([0 => $paymentData, $registerId => $paymentData]));
         } else {
             $oldPaymentData[$registerId] = $paymentData;
             $payment->setData('payment_data', json_encode($oldPaymentData));
         }
-        
+
         $payment->save();
-        
+
         $newPaymentData = json_decode($payment->getData('payment_data'), true);
         $payment->setData('payment_data', json_encode($newPaymentData[$registerId]));
+
         return $payment->getData();
     }
 }

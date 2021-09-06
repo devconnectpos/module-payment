@@ -11,6 +11,7 @@ use SM\Payment\Model\ResourceModel\RetailPayment\CollectionFactory as PaymentCol
 
 /**
  * Class UpgradeSchema
+ *
  * @package SM\Payment\Setup
  */
 class UpgradeSchema implements UpgradeSchemaInterface
@@ -22,6 +23,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * UpgradeSchema constructor.
+     *
      * @param PaymentCollection $paymentCollection
      */
     public function __construct(
@@ -31,8 +33,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
     }
 
     /**
-     * @param SchemaSetupInterface $setup
+     * @param SchemaSetupInterface   $setup
      * @param ModuleContextInterface $context
+     *
      * @throws \Zend_Db_Exception
      */
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
@@ -120,11 +123,16 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->addGravityPayment($setup);
         }
 
+        if (version_compare($context->getVersion(), '0.3.0', '<')) {
+            $this->addRegisterIdToPayment($setup);
+        }
+
         $installer->endSetup();
     }
 
     /**
      * @param SchemaSetupInterface $setup
+     *
      * @throws \Zend_Db_Exception
      */
     protected function createPaymentTable(SchemaSetupInterface $setup)
@@ -207,40 +215,40 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => 'cash',
-                    'title' => 'Cash',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => 'cash',
+                    'title'        => 'Cash',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => 'tyro',
-                    'title' => 'Tyro Gateway',
-                    'is_dummy' => 0,
-                    'payment_data' => json_encode(['mid' => 'provided by Tyro', 'tid' => 'provided by Tyro',
-                        'api_key' => 'provided by Tyro']),
+                    'type'         => 'tyro',
+                    'title'        => 'Tyro Gateway',
+                    'is_dummy'     => 0,
+                    'payment_data' => json_encode(['mid'     => 'provided by Tyro', 'tid' => 'provided by Tyro',
+                                                   'api_key' => 'provided by Tyro']),
                 ],
                 [
-                    'type' => 'credit_card',
-                    'title' => 'Credit card',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => 'credit_card',
+                    'title'        => 'Credit card',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => 'credit_card',
-                    'title' => 'Debit card',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => 'credit_card',
+                    'title'        => 'Debit card',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => 'credit_card',
-                    'title' => 'Visa card',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
-                ]
+                    'type'         => 'credit_card',
+                    'title'        => 'Visa card',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
+                ],
             ]
         );
     }
@@ -257,19 +265,19 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::GIFT_CARD_PAYMENT_TYPE,
-                    'title' => 'GiftCard',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::GIFT_CARD_PAYMENT_TYPE,
+                    'title'        => 'GiftCard',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => RetailPayment::REWARD_POINT_PAYMENT_TYPE,
-                    'title' => 'RewardPoint',
-                    'is_dummy' => 1,
+                    'type'         => RetailPayment::REWARD_POINT_PAYMENT_TYPE,
+                    'title'        => 'RewardPoint',
+                    'is_dummy'     => 1,
                     'payment_data' => json_encode([]),
                 ],
             ]
@@ -288,14 +296,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::PAYPAL_PAYMENT_TYPE,
-                    'title' => 'Paypal',
-                    'is_dummy' => 0,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::PAYPAL_PAYMENT_TYPE,
+                    'title'        => 'Paypal',
+                    'is_dummy'     => 0,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -307,8 +315,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function updateCashPaymentData(SchemaSetupInterface $setup)
     {
         $paymentTable = $setup->getTable('sm_payment');
-        $cash_payment_data = json_encode(['round_to' => '0.01_cash_denomination',
-            'rounding_rule' => 'round_midpoint_down']);
+        $cash_payment_data = json_encode(['round_to'      => '0.01_cash_denomination',
+                                          'rounding_rule' => 'round_midpoint_down']);
         $setup->getConnection()->update(
             $paymentTable,
             ['payment_data' => $cash_payment_data],
@@ -328,14 +336,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::ROUNDING_CASH,
-                    'title' => 'Cash Rounding',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::ROUNDING_CASH,
+                    'title'        => 'Cash Rounding',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -353,15 +361,15 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::IZETTLE_PAYMENT_TYPE,
+                    'type'  => RetailPayment::IZETTLE_PAYMENT_TYPE,
                     'title' => 'iZettle',
 
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -379,14 +387,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::REFUND_GC_PAYMENT_TYPE,
-                    'title' => 'Refund To GC',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::REFUND_GC_PAYMENT_TYPE,
+                    'title'        => 'Refund To GC',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -404,14 +412,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::PAYPAL_PWA,
-                    'title' => 'Paypal PWA',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::PAYPAL_PWA,
+                    'title'        => 'Paypal PWA',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -429,32 +437,32 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::PAYMENT_EXPRESS,
-                    'title' => 'Payment Express',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::PAYMENT_EXPRESS,
+                    'title'        => 'Payment Express',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => RetailPayment::AUTHORIZE_NET,
-                    'title' => 'Authorize NET',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::AUTHORIZE_NET,
+                    'title'        => 'Authorize NET',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => RetailPayment::USAEPAY,
-                    'title' => 'Usaepay',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::USAEPAY,
+                    'title'        => 'Usaepay',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => RetailPayment::MONERIS,
-                    'title' => 'Moneris',
-                    'is_dummy' => 1,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::MONERIS,
+                    'title'        => 'Moneris',
+                    'is_dummy'     => 1,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -472,15 +480,15 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::CARDKNOX,
-                    'title' => 'CardKnox',
-                    'is_dummy' => 0,
-                    'payment_data' => json_encode(['xKey' => 'provided by CardKnox',
-                        'xSoftwareName' => 'provided by CardKnox', 'xSoftwareVersion' => 'provided by CardKnox'])
+                    'type'         => RetailPayment::CARDKNOX,
+                    'title'        => 'CardKnox',
+                    'is_dummy'     => 0,
+                    'payment_data' => json_encode(['xKey'          => 'provided by CardKnox',
+                                                   'xSoftwareName' => 'provided by CardKnox', 'xSoftwareVersion' => 'provided by CardKnox']),
                 ],
             ]
         );
@@ -498,20 +506,20 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::STORE_CREDIT_PAYMENT_TYPE,
-                    'title' => 'Store Credit',
-                    'is_dummy' => 0,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::STORE_CREDIT_PAYMENT_TYPE,
+                    'title'        => 'Store Credit',
+                    'is_dummy'     => 0,
+                    'payment_data' => json_encode([]),
                 ],
                 [
-                    'type' => RetailPayment::REFUND_TO_STORE_CREDIT_PAYMENT_TYPE,
-                    'title' => 'Refund To SC',
-                    'is_dummy' => 0,
-                    'payment_data' => json_encode([])
+                    'type'         => RetailPayment::REFUND_TO_STORE_CREDIT_PAYMENT_TYPE,
+                    'title'        => 'Refund To SC',
+                    'is_dummy'     => 0,
+                    'payment_data' => json_encode([]),
                 ],
             ]
         );
@@ -523,8 +531,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function updateAuthorizeNetPayment(SchemaSetupInterface $setup)
     {
         $paymentTable = $setup->getTable('sm_payment');
-        $authorize_net_payment_data = json_encode(['api_login_id' => 'provided by AuthorizeNET',
-            'transaction_key' => 'provided by AuthorizeNET', 'sandbox_mode' => '0']);
+        $authorize_net_payment_data = json_encode(['api_login_id'    => 'provided by AuthorizeNET',
+                                                   'transaction_key' => 'provided by AuthorizeNET', 'sandbox_mode' => '0']);
         $setup->getConnection()->update(
             $paymentTable,
             ['payment_data' => $authorize_net_payment_data],
@@ -544,16 +552,16 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type',
                 'title',
                 'is_dummy',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::EWAY,
-                    'title' => 'Eway',
-                    'is_dummy' => 0,
-                    'payment_data' => json_encode(['api_key' => 'provided by Eway',
-                        'api_password' => 'provided by Eway', 'encryption_key' => 'provided by Eway',
-                        'sandbox_mode' => '0'])
+                    'type'         => RetailPayment::EWAY,
+                    'title'        => 'Eway',
+                    'is_dummy'     => 0,
+                    'payment_data' => json_encode(['api_key'      => 'provided by Eway',
+                                                   'api_password' => 'provided by Eway', 'encryption_key' => 'provided by Eway',
+                                                   'sandbox_mode' => '0']),
                 ],
             ]
         );
@@ -573,10 +581,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 $paymentTable,
                 'payment_data',
                 [
-                    'type' => Table::TYPE_TEXT,
-                    'length' => null,
+                    'type'     => Table::TYPE_TEXT,
+                    'length'   => null,
                     'nullable' => true,
-                    'comment' => 'Payment Data'
+                    'comment'  => 'Payment Data',
                 ]
             );
     }
@@ -591,17 +599,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $payment_express_payment_data = json_encode(
             [
                 'hit_username' => 'provided by Payment Express',
-                'hit_key' => 'provided by Payment Express',
-                'device_id' => 'provided by Payment Express',
-                'station_id' => 'provided by Payment Express',
-                'endpoint' => 'uat'
+                'hit_key'      => 'provided by Payment Express',
+                'device_id'    => 'provided by Payment Express',
+                'station_id'   => 'provided by Payment Express',
+                'endpoint'     => 'uat',
             ]
         );
         $setup->getConnection()->update(
             $paymentTable,
             [
                 'payment_data' => $payment_express_payment_data,
-                'is_active' => 0
+                'is_active'    => 0,
             ],
             ['type = ?' => 'payment_express']
         );
@@ -620,24 +628,24 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::ADYEN,
-                    'title' => 'Adyen Payment',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::ADYEN,
+                    'title'                 => 'Adyen Payment',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => true,
-                    'payment_data' => json_encode(
+                    'payment_data'          => json_encode(
                         [
-                            'api_key' => 'provided by Adyen',
-                            'client_key' => 'provided by Adyen',
+                            'api_key'          => 'provided by Adyen',
+                            'client_key'       => 'provided by Adyen',
                             'merchant_account' => 'provided by Adyen',
-                            'environment' => 'test',
-                            'POIID' => '',
-                            'live_url_prefix' => 'Live Url Prefix'
+                            'environment'      => 'test',
+                            'POIID'            => '',
+                            'live_url_prefix'  => 'Live Url Prefix',
                         ]
-                    )
+                    ),
                 ],
             ]
         );
@@ -656,20 +664,20 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::STRIPE,
-                    'title' => 'Stripe',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::STRIPE,
+                    'title'                 => 'Stripe',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => true,
-                    'payment_data' => json_encode(
+                    'payment_data'          => json_encode(
                         [
-                            'secret_api_key' => '',
+                            'secret_api_key'      => '',
                             'publishable_api_key' => '',
                         ]
-                    )
+                    ),
                 ],
             ]
         );
@@ -688,21 +696,21 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::FLUTTERWAVE,
-                    'title' => 'Flutterwave',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::FLUTTERWAVE,
+                    'title'                 => 'Flutterwave',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => true,
-                    'payment_data' => json_encode(
+                    'payment_data'          => json_encode(
                         [
-                            'public_key' => '',
-                            'secret_key' => '',
+                            'public_key'     => '',
+                            'secret_key'     => '',
                             'encryption_key' => '',
                         ]
-                    )
+                    ),
                 ],
             ]
         );
@@ -721,21 +729,21 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::PAYSTACK,
-                    'title' => 'Paystack',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::PAYSTACK,
+                    'title'                 => 'Paystack',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => true,
-                    'payment_data' => json_encode(
+                    'payment_data'          => json_encode(
                         [
-                            'public_key' => '',
-                            'secret_key' => '',
+                            'public_key'   => '',
+                            'secret_key'   => '',
                             'callback_url' => '',
                         ]
-                    )
+                    ),
                 ],
             ]
         );
@@ -747,7 +755,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function addBrainTreePayment(SchemaSetupInterface $setup)
     {
         $paymentCollection = $this->paymentCollection->create();
-        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::BRAIN_TREE)->getSize();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::BRAIN_TREE)->getSize();
         if ($exist) {
             return;
         }
@@ -760,15 +768,15 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::BRAIN_TREE,
-                    'title' => 'Brain Tree',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::BRAIN_TREE,
+                    'title'                 => 'Brain Tree',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => 1,
-                    'payment_data' => json_encode(['name' => 'brain_tree'])
+                    'payment_data'          => json_encode(['name' => 'brain_tree']),
                 ],
             ]
         );
@@ -780,7 +788,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function addPaypalExpressPayment(SchemaSetupInterface $setup)
     {
         $paymentCollection = $this->paymentCollection->create();
-        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::PAYPAL_EXPRESS)->getSize();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::PAYPAL_EXPRESS)->getSize();
         if ($exist) {
             return;
         }
@@ -793,15 +801,15 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::PAYPAL_EXPRESS,
-                    'title' => 'Paypal Express',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::PAYPAL_EXPRESS,
+                    'title'                 => 'Paypal Express',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => 1,
-                    'payment_data' => json_encode(['name' => RetailPayment::PAYPAL_EXPRESS])
+                    'payment_data'          => json_encode(['name' => RetailPayment::PAYPAL_EXPRESS]),
                 ],
             ]
         );
@@ -813,7 +821,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function addGravityPayment(SchemaSetupInterface $setup)
     {
         $paymentCollection = $this->paymentCollection->create();
-        $exist = (bool) $paymentCollection->addFieldToFilter('type', RetailPayment::GRAVITY)->getSize();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::GRAVITY)->getSize();
         if ($exist) {
             return;
         }
@@ -826,17 +834,34 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'title',
                 'is_dummy',
                 'allow_amount_tendered',
-                'payment_data'
+                'payment_data',
             ],
             [
                 [
-                    'type' => RetailPayment::GRAVITY,
-                    'title' => 'Gravity',
-                    'is_dummy' => 0,
+                    'type'                  => RetailPayment::GRAVITY,
+                    'title'                 => 'Gravity',
+                    'is_dummy'              => 0,
                     'allow_amount_tendered' => 1,
-                    'payment_data' => json_encode(['name' => RetailPayment::GRAVITY])
+                    'payment_data'          => json_encode(['name' => RetailPayment::GRAVITY]),
                 ],
             ]
         );
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    protected function addRegisterIdToPayment(SchemaSetupInterface $setup)
+    {
+        $setup->startSetup();
+        $setup->getConnection()->addColumn(
+            $setup->getTable('sm_payment'),
+            'register_id',
+            [
+                'type'    => Table::TYPE_INTEGER,
+                'comment' => 'Register id',
+            ]
+        );
+        $setup->endSetup();
     }
 }
