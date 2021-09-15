@@ -25,18 +25,25 @@ class PaymentHelper
         $this->paymentCollection = $paymentCollection;
     }
 
-    public function getPaymentIdByType($type)
+    public function getPaymentIdByType($type, $registerId)
     {
-        $paymentCollection = $this->getPaymentCollection()->addFieldToFilter('type', $type)->getFirstItem();
+        $paymentCollection = $this->getPaymentCollection()
+            ->addFieldToFilter('type', $type)
+            ->addFieldToFilter(['register_id', 'register_id', 'register_id'], [['eq' => $registerId], ['eq' => 0], ['null' => true]])
+            ->addOrder('id')
+            ->getFirstItem();
 
         return $paymentCollection ? $paymentCollection->getData('id') : null;
     }
 
-    public function getPaymentDataByType($type)
+    public function getPaymentDataByType($type, $registerId)
     {
-        $paymentCollection = $this->getPaymentCollection()->addFieldToFilter('type', $type)->getFirstItem();
+        $paymentCollection = $this->getPaymentCollection()->addFieldToFilter('type', $type)
+            ->addFieldToFilter(['register_id', 'register_id', 'register_id'], [['eq' => $registerId], ['eq' => 0], ['null' => true]])
+            ->addOrder('id')
+            ->getFirstItem();
 
-        return $paymentCollection ? $paymentCollection : null;
+        return $paymentCollection ?: null;
     }
 
     /**
