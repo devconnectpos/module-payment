@@ -83,22 +83,22 @@ class PaymentManagement extends ServiceAbstract
             $hasNoRegisterIdPayments = [];
             foreach ($collection as $payment) {
                 if (!$payment->getData('register_id')) {
-                    $hasNoRegisterIdPayments[$payment->getData('type')] = $payment;
+                    $hasNoRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')] = $payment;
                     continue;
                 }
-                $hasRegisterIdPayments[$payment->getData('type')] = $payment;
+                $hasRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')] = $payment;
             }
             foreach ($hasNoRegisterIdPayments as $payment) {
-                if (isset($hasRegisterIdPayments[$payment->getData('type')])) {
+                if (isset($hasRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')])) {
                     continue;
                 }
-                $hasRegisterIdPayments[$payment->getData('type')] = $payment;
+                $hasRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')] = $payment;
             }
 
             // Use the final payment array for output
             foreach ($hasRegisterIdPayments as $payment) {
                 $xPayment = new XPayment();
-                if ($payment['type'] === 'adyen') {
+                if ($payment->getData('type') === 'adyen') {
                     $paymentData = json_decode($payment->getData('payment_data'), true);
                     if (isset($paymentData[$registerId])) {
                         $payment->setData('payment_data', json_encode($paymentData[$registerId]));
