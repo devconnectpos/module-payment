@@ -207,6 +207,7 @@ class PaymentManagement extends ServiceAbstract
                     $collection = $this->paymentCollectionFactory->create();
                     $existingPayment = $collection->addFieldToFilter('register_id', $registerId)
                         ->addFieldToFilter('type', $pData['type'])
+                        ->addFieldToFilter('id', $pData['id'])
                         ->getFirstItem();
 
                     if (!$existingPayment->getId()) {
@@ -236,7 +237,7 @@ class PaymentManagement extends ServiceAbstract
 
         return $this->getSearchResult()
             ->setItems($items)
-            ->setTotalCount(1)
+            ->setTotalCount(count($items))
             ->setLastPageNumber(1)->getOutput();
     }
 
