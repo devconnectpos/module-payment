@@ -122,7 +122,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
     {
         $output->writeln('  |__ Create ConnectPOS payment table');
         $this->createPaymentTable($setup);
-        $this->addRegisterIdToPayment($setup);
 
         $output->writeln('  |__ Initialize default payment data');
         $output->writeln('     >>> Add dummy payment methods (e.g. Cash, Tyro, Credit Card, Debit Card and Visa Card) default data');
@@ -234,6 +233,12 @@ class UpgradeSchema implements UpgradeSchemaInterface
             null,
             ['nullable' => false, 'default' => '1'],
             'Allow Amount Tendered'
+        )->addColumn(
+            'sm_payment',
+            Table::TYPE_INTEGER,
+            null,
+            ['nullable' => true,],
+            'Register id'
         );
         $setup->getConnection()->createTable($table);
 
@@ -246,14 +251,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function addRegisterIdToPayment(SchemaSetupInterface $setup)
     {
         $setup->startSetup();
-        $setup->getConnection()->addColumn(
-            $setup->getTable('sm_payment'),
-            'register_id',
-            [
-                'type'    => Table::TYPE_INTEGER,
-                'comment' => 'Register id',
-            ]
-        );
+
+        if (!$setup->getConnection()->tableColumnExists($setup->getTable('sm_payment'), 'register_id')) {
+            $setup->getConnection()->addColumn(
+                $setup->getTable('sm_payment'),
+                'register_id',
+                [
+                    'type'    => Table::TYPE_INTEGER,
+                    'comment' => 'Register id',
+                ]
+            );
+        }
         $setup->endSetup();
     }
 
