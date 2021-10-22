@@ -25,7 +25,7 @@ class PaymentHelper
         $this->paymentCollection = $paymentCollection;
     }
 
-    public function getPaymentIdByType($type, $registerId)
+    public function getPaymentIdByType($type, $registerId = null)
     {
         $payment = $this->getPaymentCollection()
             ->addFieldToFilter('type', $type)
@@ -36,7 +36,7 @@ class PaymentHelper
         return $payment->getData('id');
     }
 
-    public function getPaymentDataByType($type, $registerId)
+    public function getPaymentDataByType($type, $registerId = null)
     {
         return $this->getPaymentCollection()
             ->addFieldToFilter('type', $type)
@@ -45,7 +45,7 @@ class PaymentHelper
             ->getFirstItem();
     }
 
-    public function getPaymentMethodsOfType($type, $registerId)
+    public function getPaymentMethodsOfType($type, $registerId = null)
     {
         $paymentCollection = $this->getPaymentCollection()
             ->addFieldToFilter('type', $type)
