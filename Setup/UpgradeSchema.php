@@ -234,11 +234,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ['nullable' => false, 'default' => '1'],
             'Allow Amount Tendered'
         )->addColumn(
-            'sm_payment',
+            'register_id',
             Table::TYPE_INTEGER,
             null,
             ['nullable' => true,],
-            'Register id'
+            'Register Id'
         );
         $setup->getConnection()->createTable($table);
 
