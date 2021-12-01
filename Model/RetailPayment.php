@@ -34,6 +34,7 @@ class RetailPayment extends AbstractModel implements RetailPaymentInterface, Ide
     const BRAIN_TREE = 'brain_tree';
     const PAYPAL_EXPRESS = 'paypal_express';
     const GRAVITY = 'gravity';
+    const NETS = 'nets';
 
     protected function _construct()
     {

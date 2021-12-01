@@ -110,6 +110,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.3.0', '<')) {
             $this->addRegisterIdToPayment($setup);
         }
+
+        if (version_compare($context->getVersion(), '0.3.1', '<')) {
+            $this->addNetsPayment($setup);
+        }
     }
 
     /**
@@ -886,6 +890,41 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'is_dummy'              => 0,
                     'allow_amount_tendered' => 1,
                     'payment_data'          => json_encode(['name' => RetailPayment::GRAVITY]),
+                ],
+            ]
+        );
+        $setup->endSetup();
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    protected function addNetsPayment(SchemaSetupInterface $setup)
+    {
+        $setup->startSetup();
+        $paymentCollection = $this->paymentCollection->create();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::NETS)->getSize();
+        if ($exist) {
+            return;
+        }
+
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data',
+            ],
+            [
+                [
+                    'type'                  => RetailPayment::NETS,
+                    'title'                 => 'NETS',
+                    'is_dummy'              => 0,
+                    'allow_amount_tendered' => 1,
+                    'payment_data'          => json_encode(['name' => RetailPayment::NETS]),
                 ],
             ]
         );
