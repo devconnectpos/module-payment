@@ -114,6 +114,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.3.1', '<')) {
             $this->addNetsPayment($setup);
         }
+
+        if (version_compare($context->getVersion(), '0.3.2', '<')) {
+            $this->addCVVPayment($setup);
+            $this->addPayNlPayment($setup);
+        }
     }
 
     /**
@@ -925,6 +930,70 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'is_dummy'              => 0,
                     'allow_amount_tendered' => 1,
                     'payment_data'          => json_encode(['name' => RetailPayment::NETS]),
+                ],
+            ]
+        );
+        $setup->endSetup();
+    }
+
+    protected function addCVVPayment(SchemaSetupInterface $setup)
+    {
+        $setup->startSetup();
+        $paymentCollection = $this->paymentCollection->create();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::CVV)->getSize();
+        if ($exist) {
+            return;
+        }
+
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data',
+            ],
+            [
+                [
+                    'type'                  => RetailPayment::CVV,
+                    'title'                 => 'CVV',
+                    'is_dummy'              => 0,
+                    'allow_amount_tendered' => 1,
+                    'payment_data'          => json_encode(['name' => RetailPayment::CVV]),
+                ],
+            ]
+        );
+        $setup->endSetup();
+    }
+
+    protected function addPayNlPayment(SchemaSetupInterface $setup)
+    {
+        $setup->startSetup();
+        $paymentCollection = $this->paymentCollection->create();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::PAYNL)->getSize();
+        if ($exist) {
+            return;
+        }
+
+        $paymentTable = $setup->getTable('sm_payment');
+        $setup->getConnection()->insertArray(
+            $paymentTable,
+            [
+                'type',
+                'title',
+                'is_dummy',
+                'allow_amount_tendered',
+                'payment_data',
+            ],
+            [
+                [
+                    'type'                  => RetailPayment::PAYNL,
+                    'title'                 => 'Pay.nl',
+                    'is_dummy'              => 0,
+                    'allow_amount_tendered' => 1,
+                    'payment_data'          => json_encode(['name' => RetailPayment::PAYNL]),
                 ],
             ]
         );
