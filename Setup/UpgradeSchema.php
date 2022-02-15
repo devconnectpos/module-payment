@@ -116,7 +116,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         }
 
         if (version_compare($context->getVersion(), '0.3.2', '<')) {
-            $this->addCVVPayment($setup);
+            $this->addCCVPayment($setup);
             $this->addPayNlPayment($setup);
         }
     }
@@ -169,6 +169,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $this->addPaypalExpressPayment($setup);
         $output->writeln('     >>> Add Gravity payment default data');
         $this->addGravityPayment($setup);
+        $output->writeln('     >>> Add CCV and Pay.nl payment default data');
+        $this->addCCVPayment($setup);
+        $this->addPayNlPayment($setup);
     }
 
     /**
@@ -936,7 +939,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->endSetup();
     }
 
-    protected function addCVVPayment(SchemaSetupInterface $setup)
+    protected function addCCVPayment(SchemaSetupInterface $setup)
     {
         $setup->startSetup();
         $paymentCollection = $this->paymentCollection->create();
@@ -957,11 +960,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ],
             [
                 [
-                    'type'                  => RetailPayment::CVV,
-                    'title'                 => 'CVV',
+                    'type'                  => RetailPayment::CCV,
+                    'title'                 => 'CCV',
                     'is_dummy'              => 0,
                     'allow_amount_tendered' => 1,
-                    'payment_data'          => json_encode(['name' => RetailPayment::CVV]),
+                    'payment_data'          => json_encode(['name' => RetailPayment::CCV]),
                 ],
             ]
         );

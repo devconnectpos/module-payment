@@ -35,7 +35,7 @@ class RetailPayment extends AbstractModel implements RetailPaymentInterface, Ide
     const PAYPAL_EXPRESS = 'paypal_express';
     const GRAVITY = 'gravity';
     const NETS = 'nets';
-    const CVV = 'cvv';
+    const CCV = 'ccv';
     const PAYNL = 'paynl';
 
     protected function _construct()
