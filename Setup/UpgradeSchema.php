@@ -943,7 +943,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
     {
         $setup->startSetup();
         $paymentCollection = $this->paymentCollection->create();
-        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::CVV)->getSize();
+        $exist = (bool)$paymentCollection->addFieldToFilter('type', RetailPayment::CCV)->getSize();
         if ($exist) {
             return;
         }

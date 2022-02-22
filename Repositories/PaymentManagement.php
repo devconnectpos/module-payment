@@ -81,18 +81,30 @@ class PaymentManagement extends ServiceAbstract
             // Merge payments with and without register id
             $hasRegisterIdPayments = [];
             $hasNoRegisterIdPayments = [];
+
             foreach ($collection as $payment) {
+                $idx = $payment->getData('type') . '_' . $payment->getData('title') . '_' . $payment->getData('register_id');
                 if (!$payment->getData('register_id')) {
-                    $hasNoRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')] = $payment;
+                    $hasNoRegisterIdPayments[$idx] = $payment;
                     continue;
                 }
-                $hasRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')] = $payment;
+                $hasRegisterIdPayments[$idx] = $payment;
             }
+
+            $countHasRegisterId = count($hasNoRegisterIdPayments);
+
             foreach ($hasNoRegisterIdPayments as $payment) {
-                if (isset($hasRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')])) {
+                $idx = $payment->getData('type') . '_' . $payment->getData('title') . '_' . $payment->getData('register_id');
+                if (isset($hasRegisterIdPayments[$idx])) {
                     continue;
                 }
-                $hasRegisterIdPayments[$payment->getData('type') . '_' . $payment->getData('title')] = $payment;
+
+                // Set it like this to make sure that the no register id payment won't show at checkout
+                if ($countHasRegisterId > 0) {
+                    $payment->setData('is_active', false);
+                }
+
+                $hasRegisterIdPayments[$idx] = $payment;
             }
 
             // Use the final payment array for output
@@ -188,10 +200,7 @@ class PaymentManagement extends ServiceAbstract
     {
         $data = $this->getRequestData();
         $listPayment = $data['payment_data'];
-        $registerId = 0;
-        if (isset($data['register_id'])) {
-            $registerId = $data['register_id'];
-        }
+        $registerId = $data['register_id'] ?? null;
         $items = [];
         foreach ($listPayment as $pData) {
             $xPayment = new XPayment();
@@ -201,36 +210,26 @@ class PaymentManagement extends ServiceAbstract
             if ($pData['type'] === 'adyen') {
                 $items[] = $xPayment->addData($this->saveAdyenPayment($pData, $registerId));
             } elseif (isset($pData['id']) && $pData['id'] && $pData['id'] < 1481282470403) {
-                // Find existing payment with corresponding register id
-                if ($registerId) {
-                    $pData['register_id'] = $registerId;
-                    $collection = $this->paymentCollectionFactory->create();
-                    $existingPayment = $collection->addFieldToFilter('register_id', $registerId)
-                        ->addFieldToFilter('type', $pData['type'])
-                        ->addFieldToFilter('id', $pData['id'])
-                        ->getFirstItem();
+                $existingPayment = $this->retailPaymentFactory->create();
+                $existingPayment = $existingPayment->load($pData['id']);
 
-                    if (!$existingPayment->getId()) {
-                        $pData['id'] = null;
-                        $payment = $this->retailPaymentFactory->create();
-                        $payment->addData($pData)->save();
-                        $items[] = $xPayment->addData($payment->getData());
-                    } else {
-                        $pData['id'] = $existingPayment->getId();
-                        $existingPayment->setData($pData)->save();
-                        $items[] = $xPayment->addData($existingPayment->getData());
-                    }
-                } else {
+                // If the existing payment has register id, just update
+                if ($existingPayment->getData('register_id')) {
+                    $pData['id'] = $existingPayment->getId();
+                    $existingPayment->setData($pData)->save();
+                    $items[] = $xPayment->addData($existingPayment->getData());
+                } else { // otherwise, create a new one as clone
+                    $pData['id'] = null;
+                    $pData['register_id'] = $registerId;
                     $payment = $this->retailPaymentFactory->create();
                     $payment->addData($pData)->save();
                     $items[] = $xPayment->addData($payment->getData());
                 }
             } else {
                 $pData['id'] = null;
-                $pData['type'] = "credit_card";
                 $pData['register_id'] = $registerId;
                 $payment = $this->retailPaymentFactory->create();
-                $payment->setData($pData)->save();
+                $payment->addData($pData)->save();
                 $items[] = $xPayment->addData($payment->getData());
             }
         }
