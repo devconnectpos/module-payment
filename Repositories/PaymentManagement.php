@@ -83,7 +83,7 @@ class PaymentManagement extends ServiceAbstract
             $hasNoRegisterIdPayments = [];
 
             foreach ($collection as $payment) {
-                $idx = $payment->getData('type') . '_' . $payment->getData('title') . '_' . $payment->getData('register_id');
+                $idx = $payment->getData('type').'_'.$payment->getData('title').'_'.$payment->getData('register_id');
                 if (!$payment->getData('register_id')) {
                     $hasNoRegisterIdPayments[$idx] = $payment;
                     continue;
@@ -94,7 +94,7 @@ class PaymentManagement extends ServiceAbstract
             $countHasRegisterId = count($hasNoRegisterIdPayments);
 
             foreach ($hasNoRegisterIdPayments as $payment) {
-                $idx = $payment->getData('type') . '_' . $payment->getData('title') . '_' . $payment->getData('register_id');
+                $idx = $payment->getData('type').'_'.$payment->getData('title').'_'.$payment->getData('register_id');
                 if (isset($hasRegisterIdPayments[$idx])) {
                     continue;
                 }
@@ -238,6 +238,67 @@ class PaymentManagement extends ServiceAbstract
             ->setItems($items)
             ->setTotalCount(count($items))
             ->setLastPageNumber(1)->getOutput();
+    }
+
+    /**
+     * Delete payments by ids
+     *
+     * @return array|void
+     * @throws \Exception
+     */
+    public function deletePayments()
+    {
+        $data = $this->getRequestData();
+
+        if (!isset($data['ids'])) {
+            return [];
+        }
+
+        $paymentIds = explode(",", $data['ids']);
+
+        if (empty($paymentIds)) {
+            return [];
+        }
+
+        /** @var \SM\Payment\Model\ResourceModel\RetailPayment\Collection $collection */
+        $collection = $this->paymentCollectionFactory->create();
+        $collection->addFieldToFilter('id', ['in' => $paymentIds]);
+
+        /** @var \SM\Payment\Model\RetailPayment $payment */
+        foreach ($collection as $payment) {
+            $payment->delete();
+        }
+
+        return [];
+    }
+
+    public function deleteDuplicatePayments()
+    {
+        /** @var \SM\Payment\Model\ResourceModel\RetailPayment\Collection $collection */
+        $collection = $this->paymentCollectionFactory->create();
+        $collection->addFieldToFilter(['register_id', 'register_id'], [['gteq' => 0], ['null' => true]]);
+        $checked = [];
+        $deletedCount = 0;
+
+        /** @var \SM\Payment\Model\RetailPayment $payment */
+        foreach ($collection as $payment) {
+            $registerId = $payment->getData('register_id');
+            $idx = $registerId . "_" . $payment->getData('title') . "_" . $payment->getData('type');
+
+            if (empty($registerId)) {
+                continue;
+            }
+
+            if (!isset($checked[$idx])) {
+                $checked[$idx] = true;
+                continue;
+            }
+
+            $payment->delete();
+            $deletedCount++;
+        }
+
+        return ["count" => $deletedCount];
     }
 
     protected function saveAdyenPayment($pData, $registerId)

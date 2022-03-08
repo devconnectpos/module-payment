@@ -99,6 +99,11 @@ class RetailMultiple extends Info
     protected function convertAdditionalData()
     {
         $this->multiplePayment = json_decode($this->getInfo()->getAdditionalInformation('split_data'), true);
+
+        if (!is_array($this->multiplePayment)) {
+            return $this;
+        }
+
         $this->multiplePayment = array_filter(
             $this->multiplePayment,
             function ($val) {
