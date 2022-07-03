@@ -12,14 +12,14 @@
 <b><?php echo $block->escapeHtml($block->getMethod()->getTitle()) ?></b>
 <br>
 <br>
-<?php if (count($block->getMultiplePaymentData()) > 0): ?>
+<?php if (is_array($block->getMultiplePaymentData()) && count($block->getMultiplePaymentData()) > 0): ?>
     <?php foreach ($block->getMultiplePaymentData() as $payment): ?>
         <div style="margin-left: 15px">
             <p style="font-weight: 700; text-transform: uppercase"><?php echo $payment['title']; ?>
             <?php if (isset($payment['data']['ref']) && !!$payment['data']['ref']): ?>
                 <?php echo ": Ref#" . $payment['data']['ref'] ?>
             <?php endif; ?></p>
-            
+
             <?php if ($payment['type'] === 'payment_express' && !empty($payment['data']['Result'])): ?>
                 <table class="data-table admin__table-secondary">
                     <tbody>
@@ -100,7 +100,7 @@
                     </tbody>
                 </table>
             <?php endif;?>
-    
+
             <?php // eway payment details?>
             <?php if ($payment['type'] === 'eway' && !empty($payment['data'])): ?>
                 <table class="data-table admin__table-secondary">
@@ -131,4 +131,8 @@
             <p><?php echo $block->formatPrice($payment['amount']) ?></p>
         </div>
     <?php endforeach; ?>
+<?php else: ?>
+<div style="margin-left: 15px">
+    <p style="font-weight: 700; text-transform: uppercase"><?php echo $block->getMethodTitle(); ?></p>
+</div>
 <?php endif; ?>

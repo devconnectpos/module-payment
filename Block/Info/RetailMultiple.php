@@ -74,6 +74,11 @@ class RetailMultiple extends Info
         return $this->multiplePayment;
     }
 
+    public function getMethodTitle()
+    {
+        return $this->getInfo()->getAdditionalInformation('method_title') ?? '';
+    }
+
     /**
      * @param $price
      *
