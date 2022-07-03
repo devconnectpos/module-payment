@@ -2,7 +2,7 @@
 	"name": "connectpos/module-payment",
 	"description": "N/A",
 	"type": "magento2-module",
-  "version": "22.03.08",
+  "version": "22.07.03",
 	"license": [
 		"proprietary"
 	],
