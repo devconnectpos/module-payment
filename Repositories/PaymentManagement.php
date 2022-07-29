@@ -276,7 +276,8 @@ class PaymentManagement extends ServiceAbstract
     {
         /** @var \SM\Payment\Model\ResourceModel\RetailPayment\Collection $collection */
         $collection = $this->paymentCollectionFactory->create();
-        $collection->addFieldToFilter(['register_id', 'register_id'], [['gteq' => 0], ['null' => true]]);
+        $collection->addFieldToFilter(['register_id', 'register_id'], [['gteq' => 0], ['null' => true]])
+            ->setOrder("id", "DESC");
         $checked = [];
         $deletedCount = 0;
 
@@ -291,6 +292,10 @@ class PaymentManagement extends ServiceAbstract
 
             if (!isset($checked[$idx])) {
                 $checked[$idx] = true;
+                continue;
+            }
+
+            if ($payment->getData('payment_data') && $payment->getData('payment_data') !== '[]') {
                 continue;
             }
 
