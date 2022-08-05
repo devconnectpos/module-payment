@@ -11,6 +11,8 @@ use SM\Payment\Model\RetailPaymentFactory;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
 use SM\Core\Api\Data\XPayment;
+use SM\Core\Api\Data\XPaymentFactory;
+use SM\Payment\Helper\Data as PaymentDataHelper;
 
 /**
  * Class PaymentManagement
@@ -19,7 +21,6 @@ use SM\Core\Api\Data\XPayment;
  */
 class PaymentManagement extends ServiceAbstract
 {
-
     /**
      * @var \SM\Payment\Model\RetailPaymentFactory
      */
@@ -31,23 +32,41 @@ class PaymentManagement extends ServiceAbstract
     protected $paymentCollectionFactory;
 
     /**
+     * @var XPaymentFactory
+     */
+    protected $xPaymentFactory;
+
+    /**
+     * @var PaymentDataHelper
+     */
+    protected $paymentDataHelper;
+
+    /**
      * PaymentManagement constructor.
      *
-     * @param \Magento\Framework\App\RequestInterface                         $requestInterface
-     * @param \SM\XRetail\Helper\DataConfig                                   $dataConfig
-     * @param \Magento\Store\Model\StoreManagerInterface                      $storeManager
-     * @param \SM\Payment\Model\RetailPaymentFactory                          $retailPaymentFactory
+     * @param \Magento\Framework\App\RequestInterface $requestInterface
+     * @param \SM\XRetail\Helper\DataConfig $dataConfig
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \SM\Payment\Model\RetailPaymentFactory $retailPaymentFactory
      * @param \SM\Payment\Model\ResourceModel\RetailPayment\CollectionFactory $paymentCollectionFactory
+     * @param XPaymentFactory $xPaymentFactory
+     * @param PaymentDataHelper $paymentDataHelper
      */
     public function __construct(
-        RequestInterface $requestInterface,
-        DataConfig $dataConfig,
+        RequestInterface      $requestInterface,
+        DataConfig            $dataConfig,
         StoreManagerInterface $storeManager,
-        RetailPaymentFactory $retailPaymentFactory,
-        CollectionFactory $paymentCollectionFactory
-    ) {
+        RetailPaymentFactory  $retailPaymentFactory,
+        CollectionFactory     $paymentCollectionFactory,
+        XPaymentFactory       $xPaymentFactory,
+        PaymentDataHelper     $paymentDataHelper
+    )
+    {
         $this->retailPaymentFactory = $retailPaymentFactory;
         $this->paymentCollectionFactory = $paymentCollectionFactory;
+        $this->xPaymentFactory = $xPaymentFactory;
+        $this->paymentDataHelper = $paymentDataHelper;
+
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -71,58 +90,33 @@ class PaymentManagement extends ServiceAbstract
         if ($searchCriteria === null || !$searchCriteria) {
             $searchCriteria = $this->getSearchCriteria();
         }
-        $registerId = $this->searchCriteria['registerId'];
 
+        $registerId = $searchCriteria->getData('registerId');
         $this->getSearchResult()->setSearchCriteria($searchCriteria);
         $collection = $this->getPaymentCollection($searchCriteria);
-        $collection->addFieldToFilter(['register_id', 'register_id', 'register_id'], [['eq' => $registerId], ['eq' => 0], ['null' => true]]);
+        $collection->addFieldToFilter('register_id', $registerId);
         $items = [];
-        if ($collection->getLastPageNumber() >= $searchCriteria->getData('currentPage')) {
-            // Merge payments with and without register id
-            $hasRegisterIdPayments = [];
-            $hasNoRegisterIdPayments = [];
 
+        if ($collection->getLastPageNumber() >= $searchCriteria->getData('currentPage') && $collection->count() > 0) {
             foreach ($collection as $payment) {
-                $idx = $payment->getData('type').'_'.$payment->getData('title').'_'.$payment->getData('register_id');
-                if (!$payment->getData('register_id')) {
-                    $hasNoRegisterIdPayments[$idx] = $payment;
-                    continue;
-                }
-                $hasRegisterIdPayments[$idx] = $payment;
-            }
-
-            $countHasRegisterId = count($hasNoRegisterIdPayments);
-
-            foreach ($hasNoRegisterIdPayments as $payment) {
-                $idx = $payment->getData('type').'_'.$payment->getData('title').'_'.$payment->getData('register_id');
-                if (isset($hasRegisterIdPayments[$idx])) {
-                    continue;
-                }
-
-                // Set it like this to make sure that the no register id payment won't show at checkout
-                if ($countHasRegisterId > 0) {
-                    $payment->setData('is_active', false);
-                }
-
-                $hasRegisterIdPayments[$idx] = $payment;
-            }
-
-            // Use the final payment array for output
-            foreach ($hasRegisterIdPayments as $payment) {
-                $xPayment = new XPayment();
-                if ($payment->getData('type') === 'adyen') {
-                    $paymentData = json_decode($payment->getData('payment_data'), true);
-                    if (isset($paymentData[$registerId])) {
-                        $payment->setData('payment_data', json_encode($paymentData[$registerId]));
-                    } elseif (isset($paymentData[0])) {
-                        $payment->setData('payment_data', json_encode($paymentData[0]));
-                    } else {
-                        $payment->setData('payment_data', json_encode($paymentData));
-                    }
-                }
+                $xPayment = $this->xPaymentFactory->create();
                 $xPayment->addData($payment->getData());
                 $items[] = $xPayment;
             }
+        } else {
+            $defaults = $this->paymentDataHelper->getDefaultPaymentData($registerId);
+
+            if ($searchCriteria->getData('currentPage') > 1) {
+                return $this->getSearchResult()
+                    ->setItems([])
+                    ->setTotalCount(count($defaults))
+                    ->setLastPageNumber(1);
+            }
+
+            return $this->getSearchResult()
+                ->setItems($defaults)
+                ->setTotalCount(count($defaults))
+                ->setLastPageNumber(1);
         }
 
         return $this->getSearchResult()
@@ -165,23 +159,23 @@ class PaymentManagement extends ServiceAbstract
     {
         $payments = [
             [
-                'type'     => "cash",
-                'title'    => "Cash",
+                'type' => "cash",
+                'title' => "Cash",
                 'is_dummy' => 1,
             ],
             [
-                'type'     => "credit_card",
-                'title'    => "Credit Card",
+                'type' => "credit_card",
+                'title' => "Credit Card",
                 'is_dummy' => 1,
             ],
             [
-                'type'     => "credit_card",
-                'title'    => "Debit Card",
+                'type' => "credit_card",
+                'title' => "Debit Card",
                 'is_dummy' => 1,
             ],
             [
-                'type'     => "credit_card",
-                'title'    => "Visa Card",
+                'type' => "credit_card",
+                'title' => "Visa Card",
                 'is_dummy' => 1,
             ],
         ];
@@ -203,30 +197,19 @@ class PaymentManagement extends ServiceAbstract
         $registerId = $data['register_id'] ?? null;
         $items = [];
         foreach ($listPayment as $pData) {
-            $xPayment = new XPayment();
+            if (isset($pData['id']) && $pData['id'] >= 100000) {
+                $pData['id'] = null;
+            }
+
+            $xPayment = $this->xPaymentFactory->create();
+
             if (isset($pData['payment_data'])) {
                 $pData['payment_data'] = json_encode($pData['payment_data']);
             }
+
             if ($pData['type'] === 'adyen') {
                 $items[] = $xPayment->addData($this->saveAdyenPayment($pData, $registerId));
-            } elseif (isset($pData['id']) && $pData['id'] && $pData['id'] < 1481282470403) {
-                $existingPayment = $this->retailPaymentFactory->create();
-                $existingPayment = $existingPayment->load($pData['id']);
-
-                // If the existing payment has register id, just update
-                if ($existingPayment->getData('register_id')) {
-                    $pData['id'] = $existingPayment->getId();
-                    $existingPayment->setData($pData)->save();
-                    $items[] = $xPayment->addData($existingPayment->getData());
-                } else { // otherwise, create a new one as clone
-                    $pData['id'] = null;
-                    $pData['register_id'] = $registerId;
-                    $payment = $this->retailPaymentFactory->create();
-                    $payment->addData($pData)->save();
-                    $items[] = $xPayment->addData($payment->getData());
-                }
             } else {
-                $pData['id'] = null;
                 $pData['register_id'] = $registerId;
                 $payment = $this->retailPaymentFactory->create();
                 $payment->addData($pData)->save();
@@ -274,9 +257,17 @@ class PaymentManagement extends ServiceAbstract
 
     public function deleteDuplicatePayments()
     {
+        $data = $this->getRequestData();
+
+        if (!isset($data['register_id'])) {
+            throw new \Exception("register_id is required");
+        }
+
+        $regId = $data['register_id'];
+
         /** @var \SM\Payment\Model\ResourceModel\RetailPayment\Collection $collection */
         $collection = $this->paymentCollectionFactory->create();
-        $collection->addFieldToFilter(['register_id', 'register_id'], [['gteq' => 0], ['null' => true]])
+        $collection->addFieldToFilter(['register_id', 'register_id', 'register_id'], [['eq' => $regId], ['null' => true], ['eq' => '']])
             ->setOrder("id", "DESC");
         $checked = [];
         $deletedCount = 0;
@@ -286,16 +277,12 @@ class PaymentManagement extends ServiceAbstract
             $registerId = $payment->getData('register_id');
             $idx = $registerId . "_" . $payment->getData('title') . "_" . $payment->getData('type');
 
-            if (empty($registerId)) {
-                continue;
-            }
-
             if (!isset($checked[$idx])) {
                 $checked[$idx] = true;
                 continue;
             }
 
-            if ($payment->getData('payment_data') && $payment->getData('payment_data') !== '[]') {
+            if ($payment->getData('payment_data') && $payment->getData('payment_data') !== '[]' && $payment->getData('payment_data') !== '{"name":"' . $payment->getData('type') . '"}') {
                 continue;
             }
 
