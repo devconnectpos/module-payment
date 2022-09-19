@@ -12,7 +12,7 @@
 <b><?php echo $block->escapeHtml($block->getMethod()->getTitle()) ?></b>
 <br>
 <br>
-<?php if (count($block->getMultiplePaymentData()) > 0): ?>
+<?php if (is_array($block->getMultiplePaymentData()) && count($block->getMultiplePaymentData()) > 0): ?>
     <?php foreach ($block->getMultiplePaymentData() as $payment) {
         ?>
         <div style="margin-left: 15px">
