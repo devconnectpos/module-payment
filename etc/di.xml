@@ -3,4 +3,7 @@
     <type name="Magento\Framework\View\Element\Template">
         <plugin name="module_offline_payments_override_template" type="SM\Payment\Plugin\View\Element\Template" />
     </type>
+    <type name="Paynl\Payment\Model\Paymentmethod\PaymentMethod">
+        <plugin name="fix_paynl_issue" type="SM\Payment\Plugin\Paynl\PaymentMethodPlugin" />
+    </type>
 </config>
