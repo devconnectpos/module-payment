@@ -94,7 +94,11 @@ class PayOnAccount extends Info
      */
     protected function convertAdditionalData()
     {
-        $this->multiplePayment = json_decode($this->getInfo()->getAdditionalInformation('split_data'), true);
+        if(!is_string($this->getInfo()->getAdditionalInformation('split_data'))) {
+            return $this;
+        }
+
+        $this->multiplePayment = json_decode((string)$this->getInfo()->getAdditionalInformation('split_data'), true);
         $this->multiplePayment = array_filter(
             $this->multiplePayment,
             function ($val) {
