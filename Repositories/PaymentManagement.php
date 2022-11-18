@@ -135,12 +135,12 @@ class PaymentManagement extends ServiceAbstract
         /** @var \SM\Payment\Model\ResourceModel\RetailPayment\Collection $collection */
         $collection = $this->paymentCollectionFactory->create();
 
-        if (is_nan($searchCriteria->getData('currentPage'))) {
+        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
             $collection->setCurPage(1);
         } else {
             $collection->setCurPage($searchCriteria->getData('currentPage'));
         }
-        if (is_nan($searchCriteria->getData('pageSize'))) {
+        if (is_nan((float)$searchCriteria->getData('pageSize'))) {
             $collection->setPageSize(
                 DataConfig::PAGE_SIZE_LOAD_DATA
             );
@@ -237,7 +237,7 @@ class PaymentManagement extends ServiceAbstract
             return [];
         }
 
-        $paymentIds = explode(",", $data['ids']);
+        $paymentIds = explode(",", (string)$data['ids']);
 
         if (empty($paymentIds)) {
             return [];
@@ -296,8 +296,8 @@ class PaymentManagement extends ServiceAbstract
     protected function saveAdyenPayment($pData, $registerId)
     {
         $payment = $this->retailPaymentFactory->create()->load($pData['id']);
-        $paymentData = json_decode($pData['payment_data'], true);
-        $oldPaymentData = json_decode($payment->getData('payment_data'), true);
+        $paymentData = json_decode((string)$pData['payment_data'], true);
+        $oldPaymentData = json_decode((string)$payment->getData('payment_data'), true);
         //unset old data, save to model
         unset($pData['payment_data']);
         $payment->addData($pData);
@@ -311,7 +311,7 @@ class PaymentManagement extends ServiceAbstract
 
         $payment->save();
 
-        $newPaymentData = json_decode($payment->getData('payment_data'), true);
+        $newPaymentData = json_decode((string)$payment->getData('payment_data'), true);
         $payment->setData('payment_data', json_encode($newPaymentData[$registerId]));
 
         return $payment->getData();

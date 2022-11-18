@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="SM\Payment\Model\RetailPaymentInterface" type="SM\Payment\Model\RetailPayment" />
+
     <type name="Magento\Framework\View\Element\Template">
         <plugin name="module_offline_payments_override_template" type="SM\Payment\Plugin\View\Element\Template" />
     </type>
+
     <type name="Paynl\Payment\Model\Paymentmethod\PaymentMethod">
         <plugin name="fix_paynl_issue" type="SM\Payment\Plugin\Paynl\PaymentMethodPlugin" />
     </type>

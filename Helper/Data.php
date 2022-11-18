@@ -2,8 +2,11 @@
 
 namespace SM\Payment\Helper;
 
+use Magento\Framework\Exception\CouldNotSaveException;
 use SM\Payment\Model\RetailPayment;
 use SM\Core\Api\Data\XPaymentFactory;
+use SM\Payment\Model\RetailPaymentInterfaceFactory;
+use SM\Payment\Model\RetailPaymentRepository;
 
 class Data
 {
@@ -12,15 +15,62 @@ class Data
      */
     private $xPaymentFactory;
 
-    public function __construct(XPaymentFactory $xPaymentFactory)
+    /**
+     * @var RetailPaymentRepository
+     */
+    private $paymentRepository;
+
+    /**
+     * @var RetailPaymentInterfaceFactory
+     */
+    private $retailPayment;
+
+    /**
+     * @param XPaymentFactory $xPaymentFactory
+     * @param RetailPaymentRepository $paymentRepository
+     * @param RetailPaymentInterfaceFactory $retailPayment
+     */
+    public function __construct(
+        XPaymentFactory                                 $xPaymentFactory,
+        RetailPaymentRepository                         $paymentRepository,
+        RetailPaymentInterfaceFactory $retailPayment
+    )
     {
         $this->xPaymentFactory = $xPaymentFactory;
+        $this->paymentRepository = $paymentRepository;
+        $this->retailPayment = $retailPayment;
     }
 
-    public function getDefaultPaymentData($registerId = null)
+    /**
+     * @param $registerId
+     * @return array
+     * @throws CouldNotSaveException
+     */
+    public function getDefaultPaymentData($registerId = null): array
     {
-        $defaultData = [
-            [
+        $results = [];
+
+        foreach ($this->getPaymentDataArray($registerId) as $paymentData) {
+            $payment = $this->retailPayment->create();
+            $payment->addData($paymentData);
+            $payment = $this->paymentRepository->save($payment);
+
+            $xPayment = $this->xPaymentFactory->create();
+            $xPayment->addData($payment->getData());
+            $results[] = $xPayment;
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param $registerId
+     * @return array[]
+     */
+    public function getPaymentDataArray($registerId): array
+    {
+        return [
+            100000 => [
                 'type' => 'cash',
                 'title' => 'Cash',
                 'is_active' => 1,
@@ -33,7 +83,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100001 => [
                 'type' => 'tyro',
                 'title' => 'Tyro Gateway',
                 'is_dummy' => 0,
@@ -47,7 +97,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100002 => [
                 'type' => 'credit_card',
                 'title' => 'Credit card',
                 'is_dummy' => 1,
@@ -57,7 +107,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100003 => [
                 'type' => 'credit_card',
                 'title' => 'Debit card',
                 'is_dummy' => 1,
@@ -67,7 +117,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100004 => [
                 'type' => 'credit_card',
                 'title' => 'Visa card',
                 'is_dummy' => 1,
@@ -77,7 +127,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100005 => [
                 'type' => RetailPayment::GIFT_CARD_PAYMENT_TYPE,
                 'title' => 'GiftCard',
                 'is_dummy' => 1,
@@ -87,7 +137,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100006 => [
                 'type' => RetailPayment::REWARD_POINT_PAYMENT_TYPE,
                 'title' => 'RewardPoint',
                 'is_dummy' => 1,
@@ -97,7 +147,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100007 => [
                 'type' => RetailPayment::PAYPAL_PAYMENT_TYPE,
                 'title' => 'Paypal',
                 'is_dummy' => 0,
@@ -107,7 +157,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100008 => [
                 'type' => RetailPayment::ROUNDING_CASH,
                 'title' => 'Cash Rounding',
                 'is_dummy' => 1,
@@ -117,7 +167,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100009 => [
                 'type' => RetailPayment::IZETTLE_PAYMENT_TYPE,
                 'title' => 'iZettle',
                 'is_dummy' => 1,
@@ -127,7 +177,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100010 => [
                 'type' => RetailPayment::REFUND_GC_PAYMENT_TYPE,
                 'title' => 'Refund To GC',
                 'is_dummy' => 1,
@@ -137,7 +187,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100011 => [
                 'type' => RetailPayment::PAYPAL_PWA,
                 'title' => 'Paypal PWA',
                 'is_dummy' => 1,
@@ -147,7 +197,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100012 => [
                 'type' => RetailPayment::PAYMENT_EXPRESS,
                 'title' => 'Payment Express',
                 'is_dummy' => 1,
@@ -163,7 +213,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100013 => [
                 'type' => RetailPayment::AUTHORIZE_NET,
                 'title' => 'Authorize NET',
                 'is_dummy' => 1,
@@ -177,7 +227,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100014 => [
                 'type' => RetailPayment::USAEPAY,
                 'title' => 'Usaepay',
                 'is_dummy' => 1,
@@ -187,7 +237,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100015 => [
                 'type' => RetailPayment::MONERIS,
                 'title' => 'Moneris',
                 'is_dummy' => 1,
@@ -197,7 +247,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100016 => [
                 'type' => RetailPayment::CARDKNOX,
                 'title' => 'CardKnox',
                 'is_dummy' => 0,
@@ -211,7 +261,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100017 => [
                 'type' => RetailPayment::STORE_CREDIT_PAYMENT_TYPE,
                 'title' => 'Store Credit',
                 'is_dummy' => 0,
@@ -221,7 +271,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100018 => [
                 'type' => RetailPayment::REFUND_TO_STORE_CREDIT_PAYMENT_TYPE,
                 'title' => 'Refund To SC',
                 'is_dummy' => 0,
@@ -231,7 +281,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100019 => [
                 'type' => RetailPayment::EWAY,
                 'title' => 'Eway',
                 'is_dummy' => 0,
@@ -246,7 +296,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100020 => [
                 'type' => RetailPayment::ADYEN,
                 'title' => 'Adyen Payment',
                 'is_dummy' => 0,
@@ -266,7 +316,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100021 => [
                 'type' => RetailPayment::STRIPE,
                 'title' => 'Stripe',
                 'is_dummy' => 0,
@@ -282,7 +332,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100022 => [
                 'type' => RetailPayment::FLUTTERWAVE,
                 'title' => 'Flutterwave',
                 'is_dummy' => 0,
@@ -299,7 +349,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100023 => [
                 'type' => RetailPayment::PAYSTACK,
                 'title' => 'Paystack',
                 'is_dummy' => 0,
@@ -316,7 +366,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100024 => [
                 'type' => RetailPayment::BRAIN_TREE,
                 'title' => 'Brain Tree',
                 'is_dummy' => 0,
@@ -327,7 +377,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100025 => [
                 'type' => RetailPayment::PAYPAL_EXPRESS,
                 'title' => 'Paypal Express',
                 'is_dummy' => 0,
@@ -338,7 +388,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100026 => [
                 'type' => RetailPayment::GRAVITY,
                 'title' => 'Gravity',
                 'is_dummy' => 0,
@@ -349,7 +399,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100027 => [
                 'type' => RetailPayment::NETS,
                 'title' => 'NETS',
                 'is_dummy' => 0,
@@ -360,7 +410,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100028 => [
                 'type' => RetailPayment::CCV,
                 'title' => 'CCV',
                 'is_dummy' => 0,
@@ -371,7 +421,7 @@ class Data
                 'created_at' => date('d-m-Y H:i:s'),
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
-            [
+            100029 => [
                 'type' => RetailPayment::PAYNL,
                 'title' => 'Pay.nl',
                 'is_dummy' => 0,
@@ -383,18 +433,5 @@ class Data
                 'updated_at' => date('d-m-Y H:i:s'),
             ],
         ];
-
-        $results = [];
-        $paymentId = 100000;
-
-        foreach ($defaultData as $paymentData) {
-            $payment = $this->xPaymentFactory->create();
-            $payment->addData($paymentData);
-            $payment->setData('id', $paymentId);
-            $paymentId++;
-            $results[] = $payment;
-        }
-
-        return $results;
     }
 }
