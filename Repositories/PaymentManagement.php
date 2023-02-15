@@ -295,6 +295,7 @@ class PaymentManagement extends ServiceAbstract
 
     protected function saveAdyenPayment($pData, $registerId)
     {
+        // Version
         $payment = $this->retailPaymentFactory->create()->load($pData['id']);
         $paymentData = json_decode((string)$pData['payment_data'], true);
         $oldPaymentData = json_decode((string)$payment->getData('payment_data'), true);
