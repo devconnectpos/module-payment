@@ -10,7 +10,6 @@ use SM\Payment\Model\ResourceModel\RetailPayment\CollectionFactory;
 use SM\Payment\Model\RetailPaymentFactory;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
-use SM\Core\Api\Data\XPayment;
 use SM\Core\Api\Data\XPaymentFactory;
 use SM\Payment\Helper\Data as PaymentDataHelper;
 
@@ -197,10 +196,9 @@ class PaymentManagement extends ServiceAbstract
         $registerId = $data['register_id'] ?? null;
         $items = [];
         foreach ($listPayment as $pData) {
-            if (isset($pData['id']) && $pData['id'] >= 100000) {
-                $pData['id'] = null;
-            }
-
+//            if (isset($pData['id']) && $pData['id'] >= 100000) {
+//                $pData['id'] = null;
+//            }
             $xPayment = $this->xPaymentFactory->create();
 
             if (isset($pData['payment_data'])) {
@@ -231,28 +229,21 @@ class PaymentManagement extends ServiceAbstract
      */
     public function deletePayments()
     {
-        $data = $this->getRequestData();
-
-        if (!isset($data['ids'])) {
-            return [];
-        }
-
-        $paymentIds = explode(",", (string)$data['ids']);
-
-        if (empty($paymentIds)) {
-            return [];
-        }
-
         /** @var \SM\Payment\Model\ResourceModel\RetailPayment\Collection $collection */
         $collection = $this->paymentCollectionFactory->create();
-        $collection->addFieldToFilter('id', ['in' => $paymentIds]);
-
         /** @var \SM\Payment\Model\RetailPayment $payment */
+        $type = [];
+        $count = 0;
         foreach ($collection as $payment) {
-            $payment->delete();
+            if (in_array($payment['type'].'_'.$payment['register_id'], $type)) {
+                $payment->delete();
+                $count++;
+                continue;
+            }
+            $type[] = $payment['type'].'_'.$payment['register_id'];
         }
 
-        return [];
+        return [$count];
     }
 
     public function deleteDuplicatePayments()
@@ -277,12 +268,8 @@ class PaymentManagement extends ServiceAbstract
             $registerId = $payment->getData('register_id');
             $idx = $registerId . "_" . $payment->getData('title') . "_" . $payment->getData('type');
 
-            if (!isset($checked[$idx])) {
-                $checked[$idx] = true;
-                continue;
-            }
-
-            if ($payment->getData('payment_data') && $payment->getData('payment_data') !== '[]' && $payment->getData('payment_data') !== '{"name":"' . $payment->getData('type') . '"}') {
+            if (!in_array($idx, $checked)) {
+                $checked[] = $idx;
                 continue;
             }
 
